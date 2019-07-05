@@ -14,6 +14,21 @@ import (
 
 const iqRestOrganizationPrivate = "rest/organization/%s"
 const iqRestSessionPrivate = "rest/user/session"
+const iqRestFirewallPrivate = "rest/repositories/%s/report/details"
+
+// FirewallComponent is a component in the Firewall NotReport
+type FirewallComponent struct {
+	ComponentID          nexusiq.ComponentIdentifier `json:"componentIdentifier"`
+	ComponentDisplayText string                      `json:"componentDisplayText"`
+	Pathname             string                      `json:"pathname"`
+	Hash                 string                      `json:"hash"`
+	MatchState           string                      `json:"matchState"`
+	Quarantined          bool                        `json:"quarantined"`
+	Waived               bool                        `json:"waived"`
+	ThreatLevel          int                         `json:"threatLevel"`
+	HighestThreatLevel   bool                        `json:"highestThreatLevel"`
+	PolicyName           string                      `json:"policyName"`
+}
 
 // IQ holds basic and state info on the IQ Server we will connect to
 type IQ struct {
@@ -107,6 +122,32 @@ func (iq *IQ) EvaluateComponentsAsFirewall(components []nexusiq.Component) (eval
 	eval, err = iq.EvaluateComponents(components, appID)
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+// GetFirewallState returns the components in a Firewalled proxy
+func (iq *IQ) GetFirewallState(repoid string) (c []FirewallComponent, err error) {
+	url := fmt.Sprintf(iqRestFirewallPrivate, organizationID)
+
+	req, err := iq.newPrivateRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, resp, err := iq.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		if err = json.Unmarshal(body, &c); err != nil {
+			return
+		}
 	}
 
 	return
