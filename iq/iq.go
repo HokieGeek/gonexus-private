@@ -9,7 +9,7 @@ import (
 	"time"
 	// "net/http/httputil"
 
-	"github.com/hokiegeek/gonexus/iq"
+	publiciq "github.com/hokiegeek/gonexus/iq"
 )
 
 const iqRestOrganizationPrivate = "rest/organization/%s"
@@ -18,21 +18,21 @@ const iqRestFirewallPrivate = "rest/repositories/%s/report/details"
 
 // FirewallComponent is a component in the Firewall NotReport
 type FirewallComponent struct {
-	ComponentID          nexusiq.ComponentIdentifier `json:"componentIdentifier"`
-	ComponentDisplayText string                      `json:"componentDisplayText"`
-	Pathname             string                      `json:"pathname"`
-	Hash                 string                      `json:"hash"`
-	MatchState           string                      `json:"matchState"`
-	Quarantined          bool                        `json:"quarantined"`
-	Waived               bool                        `json:"waived"`
-	ThreatLevel          int                         `json:"threatLevel"`
-	HighestThreatLevel   bool                        `json:"highestThreatLevel"`
-	PolicyName           string                      `json:"policyName"`
+	ComponentID          publiciq.ComponentIdentifier `json:"componentIdentifier"`
+	ComponentDisplayText string                       `json:"componentDisplayText"`
+	Pathname             string                       `json:"pathname"`
+	Hash                 string                       `json:"hash"`
+	MatchState           string                       `json:"matchState"`
+	Quarantined          bool                         `json:"quarantined"`
+	Waived               bool                         `json:"waived"`
+	ThreatLevel          int                          `json:"threatLevel"`
+	HighestThreatLevel   bool                         `json:"highestThreatLevel"`
+	PolicyName           string                       `json:"policyName"`
 }
 
 // IQ holds basic and state info on the IQ Server we will connect to
 type IQ struct {
-	nexusiq.IQ
+	publiciq.IQ
 }
 
 func (iq *IQ) createTempApplication() (orgID string, appName string, appID string, err error) {
@@ -110,7 +110,7 @@ func (iq *IQ) DeleteOrganization(organizationID string) error {
 }
 
 // EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func (iq *IQ) EvaluateComponentsAsFirewall(components []nexusiq.Component) (eval *nexusiq.Evaluation, err error) {
+func (iq *IQ) EvaluateComponentsAsFirewall(components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
 	// Create temp application
 	_, appName, appID, err := iq.createTempApplication()
 	if err != nil {
