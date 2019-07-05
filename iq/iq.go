@@ -1,13 +1,14 @@
 package nexusiq
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
-	// "net/http/httputil"
 
 	publiciq "github.com/hokiegeek/gonexus/iq"
 )
@@ -92,16 +93,41 @@ func (iq *IQ) newPrivateRequest(method, endpoint string, payload io.Reader) (*ht
 	return req, nil
 }
 
-// DeleteOrganization deletes an organization in IQ with the given id
-func (iq *IQ) DeleteOrganization(organizationID string) error {
-	url := fmt.Sprintf(iqRestOrganizationPrivate, organizationID)
-
-	req, err := iq.newPrivateRequest("DELETE", url, nil)
+func (iq *IQ) phttp(method, endpoint string, payload io.Reader) ([]byte, *http.Response, error) {
+	request, err := iq.newPrivateRequest(method, endpoint, payload)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	_, resp, err := iq.Do(req)
+	return iq.Do(request)
+}
+
+// Pget performs an HTTP GET against the indicated private API endpoint
+func (iq *IQ) Pget(endpoint string) ([]byte, *http.Response, error) {
+	return iq.phttp("GET", endpoint, nil)
+}
+
+// Ppost performs an HTTP POST against the indicated private API endpoint
+func (iq *IQ) Ppost(endpoint string, payload []byte) ([]byte, *http.Response, error) {
+	return iq.phttp("POST", endpoint, bytes.NewBuffer(payload))
+}
+
+// Pput performs an HTTP PUT against the indicated private API endpoint
+func (iq *IQ) Pput(endpoint string, payload []byte) ([]byte, *http.Response, error) {
+	return iq.phttp("PUT", endpoint, bytes.NewBuffer(payload))
+}
+
+// Pdel performs an HTTP DELETE against the indicated private API endpoint
+func (iq *IQ) Pdel(endpoint string) (resp *http.Response, err error) {
+	_, resp, err = iq.phttp("DELETE", endpoint, nil)
+	return
+}
+
+// DeleteOrganization deletes an organization in IQ with the given id
+func (iq *IQ) DeleteOrganization(organizationID string) error {
+	endpoint := fmt.Sprintf(iqRestOrganizationPrivate, organizationID)
+
+	resp, err := iq.Pdel(endpoint)
 	if err != nil && resp.StatusCode != http.StatusNoContent {
 		return err
 	}
@@ -129,25 +155,11 @@ func (iq *IQ) EvaluateComponentsAsFirewall(components []publiciq.Component) (eva
 
 // GetFirewallState returns the components in a Firewalled proxy
 func (iq *IQ) GetFirewallState(repoid string) (c []FirewallComponent, err error) {
-	url := fmt.Sprintf(iqRestFirewallPrivate, organizationID)
+	endpoint := fmt.Sprintf(iqRestFirewallPrivate, repoid)
 
-	req, err := iq.newPrivateRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	_, resp, err := iq.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == http.StatusOK {
-		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		if err = json.Unmarshal(body, &c); err != nil {
-			return
-		}
+	body, _, err := iq.Pget(endpoint)
+	if err = json.Unmarshal(body, &c); err != nil {
+		return
 	}
 
 	return
