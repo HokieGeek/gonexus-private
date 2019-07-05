@@ -1,8 +1,6 @@
 package nexusiqprivate
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -22,27 +20,7 @@ type IQprivate struct {
 	nexusiq.IQ
 }
 
-func (iq *IQ) getApplicationInfoByName(applicationName string) (appInfo *iqAppInfo, err error) {
-	endpoint := fmt.Sprintf("%s?publicId=%s", iqRestApplication, applicationName)
-
-	body, _, err := iq.Get(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp iqAppInfoResponse
-	if err = json.Unmarshal(body, &resp); err != nil {
-		return nil, err
-	}
-
-	if len(resp.Applications) == 0 {
-		return nil, errors.New("Application not found")
-	}
-
-	return &resp.Applications[0], nil
-}
-
-func (iq *IQ) createTempApplication() (orgID string, appName string, appID string, err error) {
+func (iq *IQprivate) createTempApplication() (orgID string, appName string, appID string, err error) {
 	rand.Seed(time.Now().UnixNano())
 	name := strconv.Itoa(rand.Int())
 
@@ -61,8 +39,8 @@ func (iq *IQ) createTempApplication() (orgID string, appName string, appID strin
 	return
 }
 
-func (iq *IQ) deleteTempApplication(applicationName string) error {
-	appInfo, err := iq.getApplicationInfoByName(applicationName)
+func (iq *IQprivate) deleteTempApplication(applicationName string) error {
+	appInfo, err := iq.GetApplicationDetailsByName(applicationName)
 	if err != nil {
 		return err
 	}
@@ -78,7 +56,7 @@ func (iq *IQ) deleteTempApplication(applicationName string) error {
 	return nil
 }
 
-func (iq *IQ) newPrivateRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
+func (iq *IQprivate) newPrivateRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
 	req, err := iq.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, err
@@ -117,7 +95,7 @@ func (iq *IQprivate) DeleteOrganization(organizationID string) error {
 }
 
 // EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func (iq *IQ) EvaluateComponentsAsFirewall(components []Component) (eval *Evaluation, err error) {
+func (iq *IQprivate) EvaluateComponentsAsFirewall(components []nexusiq.Component) (eval *nexusiq.Evaluation, err error) {
 	// Create temp application
 	_, appName, appID, err := iq.createTempApplication()
 	if err != nil {
