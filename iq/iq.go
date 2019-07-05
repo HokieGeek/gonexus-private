@@ -1,4 +1,4 @@
-package nexusiqprivate
+package nexusiq
 
 import (
 	"fmt"
@@ -15,12 +15,12 @@ import (
 const iqRestOrganizationPrivate = "rest/organization/%s"
 const iqRestSessionPrivate = "rest/user/session"
 
-// IQprivate holds basic and state info on the IQ Server we will connect to
-type IQprivate struct {
+// IQ holds basic and state info on the IQ Server we will connect to
+type IQ struct {
 	nexusiq.IQ
 }
 
-func (iq *IQprivate) createTempApplication() (orgID string, appName string, appID string, err error) {
+func (iq *IQ) createTempApplication() (orgID string, appName string, appID string, err error) {
 	rand.Seed(time.Now().UnixNano())
 	name := strconv.Itoa(rand.Int())
 
@@ -39,7 +39,7 @@ func (iq *IQprivate) createTempApplication() (orgID string, appName string, appI
 	return
 }
 
-func (iq *IQprivate) deleteTempApplication(applicationName string) error {
+func (iq *IQ) deleteTempApplication(applicationName string) error {
 	appInfo, err := iq.GetApplicationDetailsByName(applicationName)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func (iq *IQprivate) deleteTempApplication(applicationName string) error {
 	return nil
 }
 
-func (iq *IQprivate) newPrivateRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
+func (iq *IQ) newPrivateRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
 	req, err := iq.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (iq *IQprivate) newPrivateRequest(method, endpoint string, payload io.Reade
 }
 
 // DeleteOrganization deletes an organization in IQ with the given id
-func (iq *IQprivate) DeleteOrganization(organizationID string) error {
+func (iq *IQ) DeleteOrganization(organizationID string) error {
 	url := fmt.Sprintf(iqRestOrganizationPrivate, organizationID)
 
 	req, err := iq.newPrivateRequest("DELETE", url, nil)
@@ -87,7 +87,7 @@ func (iq *IQprivate) DeleteOrganization(organizationID string) error {
 	}
 
 	_, resp, err := iq.Do(req)
-	if err != nil || resp.StatusCode != http.StatusNoContent {
+	if err != nil && resp.StatusCode != http.StatusNoContent {
 		return err
 	}
 
@@ -95,7 +95,7 @@ func (iq *IQprivate) DeleteOrganization(organizationID string) error {
 }
 
 // EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func (iq *IQprivate) EvaluateComponentsAsFirewall(components []nexusiq.Component) (eval *nexusiq.Evaluation, err error) {
+func (iq *IQ) EvaluateComponentsAsFirewall(components []nexusiq.Component) (eval *nexusiq.Evaluation, err error) {
 	// Create temp application
 	_, appName, appID, err := iq.createTempApplication()
 	if err != nil {
@@ -112,9 +112,9 @@ func (iq *IQprivate) EvaluateComponentsAsFirewall(components []nexusiq.Component
 	return
 }
 
-// New creates a new IQprivate instance
-func New(host, username, password string) (*IQprivate, error) {
-	iq := new(IQprivate)
+// New creates a new IQ instance
+func New(host, username, password string) (*IQ, error) {
+	iq := new(IQ)
 	iq.Host = host
 	iq.Username = username
 	iq.Password = password
