@@ -2,4 +2,4 @@ module github.com/hokiegeek/gonexus-private
 
 go 1.12
 
-require github.com/hokiegeek/gonexus v0.7.1
+require github.com/hokiegeek/gonexus v0.7.2

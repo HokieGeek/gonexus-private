@@ -65,9 +65,7 @@ func (iq *IQ) deleteTempApplication(applicationName string) error {
 		return err
 	}
 
-	if err := iq.DeleteOrganization(appInfo.OrganizationID); err != nil {
-		return err
-	}
+	iq.DeleteOrganization(appInfo.OrganizationID) // OJO: Gonna go ahead and ignore this error for now
 
 	return nil
 }
