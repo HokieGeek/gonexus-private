@@ -8,4 +8,9 @@ github.com/hokiegeek/gonexus v0.5.0 h1:YudIba8D9lDZear5z3UinL8CW5UmwWxvGtX8RU5GF
 github.com/hokiegeek/gonexus v0.5.0/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=
 github.com/hokiegeek/gonexus v0.7.0/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=
 github.com/hokiegeek/gonexus v0.7.1/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=
+github.com/hokiegeek/gonexus v0.7.2 h1:LFZ+wRQw2z1tPuUZqyXqOeZa7+6CuMny7PloMFGuw/c=
 github.com/hokiegeek/gonexus v0.7.2/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=
+github.com/hokiegeek/gonexus v0.8.0 h1:s20rZrPNXAqTJbT+9GDP667WutnK4+0bf5fNmXjazok=
+github.com/hokiegeek/gonexus v0.8.0/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=
+github.com/hokiegeek/gonexus v0.9.0 h1:vEOZ/ePmDi/xm06DTIRG68HofGyaRF5VJ/LW2Yxb1A0=
+github.com/hokiegeek/gonexus v0.9.0/go.mod h1:hxA5O/9PtcsWdeJkXbhgDd/RPPltBxHJ7yDupmpws/E=

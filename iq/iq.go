@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hokiegeek/gonexus"
 	publiciq "github.com/hokiegeek/gonexus/iq"
 )
 
@@ -33,50 +34,25 @@ type FirewallComponent struct {
 
 // IQ holds basic and state info on the IQ Server we will connect to
 type IQ struct {
-	publiciq.IQ
+	defaultServer nexus.DefaultServer
 }
 
-func (iq *IQ) createTempApplication() (orgID string, appName string, appID string, err error) {
-	rand.Seed(time.Now().UnixNano())
-	name := strconv.Itoa(rand.Int())
-
-	orgID, err = iq.CreateOrganization(name)
-	if err != nil {
-		return
-	}
-
-	appName = fmt.Sprintf("%s_app", name)
-
-	appID, err = iq.CreateApplication(appName, orgID)
-	if err != nil {
-		return
-	}
-
-	return
+// New creates a new IQ instance
+func New(host, username, password string) (*IQ, error) {
+	iq := new(IQ)
+	iq.defaultServer.Host = host
+	iq.defaultServer.Username = username
+	iq.defaultServer.Password = password
+	return iq, nil
 }
 
-func (iq *IQ) deleteTempApplication(applicationName string) error {
-	appInfo, err := iq.GetApplicationDetailsByName(applicationName)
-	if err != nil {
-		return err
-	}
-
-	if err := iq.DeleteApplication(appInfo.ID); err != nil {
-		return err
-	}
-
-	iq.DeleteOrganization(appInfo.OrganizationID) // OJO: Gonna go ahead and ignore this error for now
-
-	return nil
-}
-
-func (iq *IQ) newPrivateRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
-	req, err := iq.NewRequest(method, endpoint, payload)
+func (iq *IQ) NewRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
+	req, err := iq.defaultServer.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	_, resp, err := iq.Get(iqRestSessionPrivate)
+	_, resp, err := iq.defaultServer.Get(iqRestSessionPrivate)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +67,13 @@ func (iq *IQ) newPrivateRequest(method, endpoint string, payload io.Reader) (*ht
 	return req, nil
 }
 
-func (iq *IQ) phttp(method, endpoint string, payload io.Reader) ([]byte, *http.Response, error) {
-	request, err := iq.newPrivateRequest(method, endpoint, payload)
+// Do performs an http.Request and reads the body if StatusOK
+func (iq *IQ) Do(request *http.Request) ([]byte, *http.Response, error) {
+	return iq.defaultServer.Do(request)
+}
+
+func (iq *IQ) http(method, endpoint string, payload io.Reader) ([]byte, *http.Response, error) {
+	request, err := iq.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,32 +81,66 @@ func (iq *IQ) phttp(method, endpoint string, payload io.Reader) ([]byte, *http.R
 	return iq.Do(request)
 }
 
-// Pget performs an HTTP GET against the indicated private API endpoint
-func (iq *IQ) Pget(endpoint string) ([]byte, *http.Response, error) {
-	return iq.phttp("GET", endpoint, nil)
+// Get performs an HTTP GET against the indicated endpoint
+func (iq IQ) Get(endpoint string) ([]byte, *http.Response, error) {
+	return iq.http("GET", endpoint, nil)
 }
 
-// Ppost performs an HTTP POST against the indicated private API endpoint
-func (iq *IQ) Ppost(endpoint string, payload []byte) ([]byte, *http.Response, error) {
-	return iq.phttp("POST", endpoint, bytes.NewBuffer(payload))
+// Post performs an HTTP POST against the indicated endpoint
+func (iq IQ) Post(endpoint string, payload []byte) ([]byte, *http.Response, error) {
+	return iq.http("POST", endpoint, bytes.NewBuffer(payload))
 }
 
-// Pput performs an HTTP PUT against the indicated private API endpoint
-func (iq *IQ) Pput(endpoint string, payload []byte) ([]byte, *http.Response, error) {
-	return iq.phttp("PUT", endpoint, bytes.NewBuffer(payload))
+// Put performs an HTTP PUT against the indicated endpoint
+func (iq IQ) Put(endpoint string, payload []byte) ([]byte, *http.Response, error) {
+	return iq.http("PUT", endpoint, bytes.NewBuffer(payload))
 }
 
-// Pdel performs an HTTP DELETE against the indicated private API endpoint
-func (iq *IQ) Pdel(endpoint string) (resp *http.Response, err error) {
-	_, resp, err = iq.phttp("DELETE", endpoint, nil)
+// Del performs an HTTP DELETE against the indicated endpoint
+func (iq IQ) Del(endpoint string) (resp *http.Response, err error) {
+	_, resp, err = iq.http("DELETE", endpoint, nil)
 	return
 }
 
+func createTempApplication(iq nexus.Server) (orgID string, appName string, appID string, err error) {
+	rand.Seed(time.Now().UnixNano())
+	name := strconv.Itoa(rand.Int())
+
+	orgID, err = publiciq.CreateOrganization(iq, name)
+	if err != nil {
+		return
+	}
+
+	appName = fmt.Sprintf("%s_app", name)
+
+	appID, err = publiciq.CreateApplication(iq, appName, orgID)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func deleteTempApplication(iq IQ, applicationName string) error {
+	appInfo, err := publiciq.GetApplicationDetailsByName(iq, applicationName)
+	if err != nil {
+		return err
+	}
+
+	if err := publiciq.DeleteApplication(iq, appInfo.ID); err != nil {
+		return err
+	}
+
+	DeleteOrganization(iq, appInfo.OrganizationID) // OJO: Gonna go ahead and ignore this error for now
+
+	return nil
+}
+
 // DeleteOrganization deletes an organization in IQ with the given id
-func (iq *IQ) DeleteOrganization(organizationID string) error {
+func DeleteOrganization(iq IQ, organizationID string) error {
 	endpoint := fmt.Sprintf(iqRestOrganizationPrivate, organizationID)
 
-	resp, err := iq.Pdel(endpoint)
+	resp, err := iq.Del(endpoint)
 	if err != nil && resp.StatusCode != http.StatusNoContent {
 		return err
 	}
@@ -134,16 +149,16 @@ func (iq *IQ) DeleteOrganization(organizationID string) error {
 }
 
 // EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func (iq *IQ) EvaluateComponentsAsFirewall(components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
+func EvaluateComponentsAsFirewall(iq IQ, components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
 	// Create temp application
-	_, appName, appID, err := iq.createTempApplication()
+	_, appName, appID, err := createTempApplication(iq)
 	if err != nil {
 		return
 	}
-	defer iq.deleteTempApplication(appName)
+	defer deleteTempApplication(iq, appName)
 
 	// Evaluate components
-	eval, err = iq.EvaluateComponents(components, appID)
+	eval, err = publiciq.EvaluateComponents(iq.defaultServer, components, appID)
 	if err != nil {
 		return
 	}
@@ -152,22 +167,13 @@ func (iq *IQ) EvaluateComponentsAsFirewall(components []publiciq.Component) (eva
 }
 
 // GetFirewallState returns the components in a Firewalled proxy
-func (iq *IQ) GetFirewallState(repoid string) (c []FirewallComponent, err error) {
+func GetFirewallState(iq *IQ, repoid string) (c []FirewallComponent, err error) {
 	endpoint := fmt.Sprintf(iqRestFirewallPrivate, repoid)
 
-	body, _, err := iq.Pget(endpoint)
+	body, _, err := iq.Get(endpoint)
 	if err = json.Unmarshal(body, &c); err != nil {
 		return
 	}
 
 	return
-}
-
-// New creates a new IQ instance
-func New(host, username, password string) (*IQ, error) {
-	iq := new(IQ)
-	iq.Host = host
-	iq.Username = username
-	iq.Password = password
-	return iq, nil
 }
