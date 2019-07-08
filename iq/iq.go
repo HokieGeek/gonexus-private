@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hokiegeek/gonexus"
+	nexus "github.com/hokiegeek/gonexus"
 	publiciq "github.com/hokiegeek/gonexus/iq"
 )
 
@@ -46,6 +46,7 @@ func New(host, username, password string) (*IQ, error) {
 	return iq, nil
 }
 
+// NewRequest creates an http.Request object with private session
 func (iq *IQ) NewRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
 	req, err := iq.defaultServer.NewRequest(method, endpoint, payload)
 	if err != nil {
