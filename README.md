@@ -10,12 +10,31 @@ The library is broken into two packages. One for each application
 ### nexusiq
 
 Create a connection to an instance of Nexus IQ Server
-```go
-import "github.com/hokiegeek/gonexus-private/iq"
 
-iq, err := nexusiq.New("http://localhost:8070", "user", "password")
-if err != nil {
-    panic(err)
+Example:
+```go
+import (
+	"github.com/hokiegeek/gonexus-private/iq"
+	"github.com/hokiegeek/gonexus/iq"
+)
+
+func main() {
+	// Define the IQ server instance
+	iq, err := nexusiq.New("http://localhost:8070", "username", "password")
+	if err != nil {
+		panic(err)
+	}
+
+	// Create a new organization using the public API
+	orgID, err := nexusiq.CreateOrganization(iq, "foobar")
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete that organization using the private API
+	if err := privateiq.DeleteOrganization(iq, orgID); err != nil {
+		panic(err)
+	}
 }
 ```
 
