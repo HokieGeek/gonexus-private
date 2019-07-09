@@ -46,6 +46,15 @@ func New(host, username, password string) (*IQ, error) {
 	return iq, nil
 }
 
+// FromPublic creates a private IQ instance from a public one
+func FromPublic(iq publiciq.IQ) (*IQ, error) {
+	priv := new(IQ)
+	priv.defaultServer.Host = iq.Host
+	priv.defaultServer.Username = iq.Username
+	priv.defaultServer.Password = iq.Password
+	return priv, nil
+}
+
 // NewRequest creates an http.Request object with private session
 func (iq *IQ) NewRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
 	req, err := iq.defaultServer.NewRequest(method, endpoint, payload)
