@@ -122,8 +122,8 @@ func createTempApplication(iq nexus.Server) (orgID string, appName string, appID
 	return
 }
 
-func deleteTempApplication(iq IQ, applicationName string) error {
-	appInfo, err := publiciq.GetApplicationDetailsByName(iq, applicationName)
+func deleteTempApplication(iq IQ, applicationPublicID string) error {
+	appInfo, err := publiciq.GetApplicationDetailsByPublicID(iq, applicationPublicID)
 	if err != nil {
 		return err
 	}
