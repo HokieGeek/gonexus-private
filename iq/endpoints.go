@@ -28,7 +28,7 @@ type FirewallComponent struct {
 	PolicyName           string                       `json:"policyName"`
 }
 
-func createTempApplication(iq *publiciq.IQ) (orgID string, appName string, appID string, err error) {
+func createTempApplication(iq publiciq.IQ) (orgID string, appName string, appID string, err error) {
 	rand.Seed(time.Now().UnixNano())
 	name := strconv.Itoa(rand.Int())
 
@@ -47,8 +47,8 @@ func createTempApplication(iq *publiciq.IQ) (orgID string, appName string, appID
 	return
 }
 
-func deleteTempApplication(iq *publiciq.IQ, applicationPublicID string) error {
-	appInfo, err := publiciq.GetApplicationDetailsByPublicID(iq, applicationPublicID)
+func deleteTempApplication(iq publiciq.IQ, applicationPublicID string) error {
+	appInfo, err := publiciq.GetApplicationByPublicID(iq, applicationPublicID)
 	if err != nil {
 		return err
 	}
@@ -63,10 +63,10 @@ func deleteTempApplication(iq *publiciq.IQ, applicationPublicID string) error {
 }
 
 // DeleteOrganization deletes an organization in IQ with the given id
-func DeleteOrganization(iq *publiciq.IQ, organizationID string) error {
+func DeleteOrganization(iq publiciq.IQ, organizationID string) error {
 	endpoint := fmt.Sprintf(iqRestOrganizationPrivate, organizationID)
 
-	resp, err := fromPublic(iq).Del(endpoint)
+	resp, err := FromPublic(iq).Del(endpoint)
 	if err != nil && resp.StatusCode != http.StatusNoContent {
 		return err
 	}
@@ -75,7 +75,7 @@ func DeleteOrganization(iq *publiciq.IQ, organizationID string) error {
 }
 
 // EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func EvaluateComponentsAsFirewall(iq *publiciq.IQ, components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
+func EvaluateComponentsAsFirewall(iq publiciq.IQ, components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
 	// Create temp application
 	_, appName, appID, err := createTempApplication(iq)
 	if err != nil {
@@ -93,10 +93,10 @@ func EvaluateComponentsAsFirewall(iq *publiciq.IQ, components []publiciq.Compone
 }
 
 // GetFirewallState returns the components in a Firewalled proxy
-func GetFirewallState(iq *publiciq.IQ, repoid string) (c []FirewallComponent, err error) {
+func GetFirewallState(iq publiciq.IQ, repoid string) (c []FirewallComponent, err error) {
 	endpoint := fmt.Sprintf(iqRestFirewallPrivate, repoid)
 
-	body, _, err := fromPublic(iq).Get(endpoint)
+	body, _, err := FromPublic(iq).Get(endpoint)
 	if err = json.Unmarshal(body, &c); err != nil {
 		return
 	}

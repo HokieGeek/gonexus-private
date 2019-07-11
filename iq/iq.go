@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/hokiegeek/gonexus"
 	publiciq "github.com/hokiegeek/gonexus/iq"
 )
 
@@ -12,19 +13,17 @@ const iqRestSessionPrivate = "rest/user/session"
 
 // Defines a new IQ instance which provides overrides to transparently allow access to private APIs
 type privateiq struct {
-	publiciq.IQ
-	pub *publiciq.IQ
+	nexus.DefaultClient
+	pub publiciq.IQ
 }
 
 // NewRequest creates an http.Request object with private session
 func (iq privateiq) NewRequest(method, endpoint string, payload io.Reader) (*http.Request, error) {
-	// req, err := iq.defaultServer.NewRequest(method, endpoint, payload)
 	req, err := iq.pub.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	// _, resp, err := iq.defaultServer.Get(iqRestSessionPrivate)
 	_, resp, err := iq.pub.Get(iqRestSessionPrivate)
 	if err != nil {
 		return nil, err
@@ -51,31 +50,32 @@ func (iq privateiq) http(method, endpoint string, payload io.Reader) ([]byte, *h
 
 // Get performs an HTTP GET against the indicated endpoint
 func (iq privateiq) Get(endpoint string) ([]byte, *http.Response, error) {
-	return iq.http("GET", endpoint, nil)
+	return iq.http(http.MethodGet, endpoint, nil)
 }
 
 // Post performs an HTTP POST against the indicated endpoint
 func (iq privateiq) Post(endpoint string, payload []byte) ([]byte, *http.Response, error) {
-	return iq.http("POST", endpoint, bytes.NewBuffer(payload))
+	return iq.http(http.MethodPost, endpoint, bytes.NewBuffer(payload))
 }
 
 // Put performs an HTTP PUT against the indicated endpoint
-func (iq privateiq) Put(endpoint string, payload []byte) ([]byte, *http.Response, error) {
-	return iq.http("PUT", endpoint, bytes.NewBuffer(payload))
+func (iq privateiq) Put(endpoint string, payload []byte) (resp *http.Response, err error) {
+	_, resp, err = iq.http(http.MethodPut, endpoint, bytes.NewBuffer(payload))
+	return
 }
 
 // Del performs an HTTP DELETE against the indicated endpoint
 func (iq privateiq) Del(endpoint string) (resp *http.Response, err error) {
-	_, resp, err = iq.http("DELETE", endpoint, nil)
+	_, resp, err = iq.http(http.MethodDelete, endpoint, nil)
 	return
 }
 
-// Wraps a privateiq instance around a public one
-func fromPublic(iq *publiciq.IQ) *privateiq {
+// FromPublic wraps a privateiq instance around a public one
+func FromPublic(iq publiciq.IQ) publiciq.IQ {
 	priv := new(privateiq)
 	priv.pub = iq
-	priv.Host = iq.Host
-	priv.Username = iq.Username
-	priv.Password = iq.Password
+	priv.Host = iq.Info().Host
+	priv.Username = iq.Info().Username
+	priv.Password = iq.Info().Password
 	return priv
 }
