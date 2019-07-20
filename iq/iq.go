@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/hokiegeek/gonexus"
-	publiciq "github.com/hokiegeek/gonexus/iq"
+	"github.com/sonatype-nexus-community/gonexus"
+	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
 
 const iqRestSessionPrivate = "rest/user/session"

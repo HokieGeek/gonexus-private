@@ -3,7 +3,7 @@ package privateiq
 import (
 	"time"
 
-	"github.com/hokiegeek/gonexus/iq"
+	"github.com/sonatype-nexus-community/gonexus/iq"
 )
 
 func ExampleDeleteOrganization() {

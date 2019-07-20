@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	publiciq "github.com/hokiegeek/gonexus/iq"
+	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
 
 const iqRestOrganizationPrivate = "rest/organization/%s"
