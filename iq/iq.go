@@ -1,7 +1,6 @@
 package privateiq
 
 import (
-	"bytes"
 	"io"
 	"net/http"
 
@@ -14,6 +13,7 @@ const iqRestSessionPrivate = "rest/user/session"
 // Defines a new IQ instance which provides overrides to transparently allow access to private APIs
 type privateiq struct {
 	nexus.DefaultClient
+	// publiciq.IQ
 	pub publiciq.IQ
 }
 
@@ -54,13 +54,13 @@ func (iq privateiq) Get(endpoint string) ([]byte, *http.Response, error) {
 }
 
 // Post performs an HTTP POST against the indicated endpoint
-func (iq privateiq) Post(endpoint string, payload []byte) ([]byte, *http.Response, error) {
-	return iq.http(http.MethodPost, endpoint, bytes.NewBuffer(payload))
+func (iq privateiq) Post(endpoint string, payload io.Reader) ([]byte, *http.Response, error) {
+	return iq.http(http.MethodPost, endpoint, payload)
 }
 
 // Put performs an HTTP PUT against the indicated endpoint
-func (iq privateiq) Put(endpoint string, payload []byte) (resp *http.Response, err error) {
-	_, resp, err = iq.http(http.MethodPut, endpoint, bytes.NewBuffer(payload))
+func (iq privateiq) Put(endpoint string, payload io.Reader) (resp *http.Response, err error) {
+	_, resp, err = iq.http(http.MethodPut, endpoint, payload)
 	return
 }
 
