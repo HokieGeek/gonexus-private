@@ -120,12 +120,4 @@ curl --verbose \
      --header "X-CSRF-TOKEN: $(awk '/CLM-CSRF-TOKEN/ { print $NF }' ${cookies})" \
      -o ./nexus-iq-support_$(date +%Y%m%d-%H%M).zip \
      "${iq_host}/rest/support?noLimit=true"
-
-// Export policiet
-curl --verbose \
-     --user ${user_pwd} \
-     --cookie-jar ${cookies} --cookie ${cookies} \
-     --header "X-CSRF-TOKEN: $(awk '/CLM-CSRF-TOKEN/ { print $NF }' ${cookies})" \
-     "http://${iq_host}/rest/policy/organization/ROOT_ORGANIZATION_ID/export" \
-     | tee policies_$(date +%Y%m%d%H%M).json
 */
