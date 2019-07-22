@@ -74,8 +74,8 @@ func DeleteOrganization(iq publiciq.IQ, organizationID string) error {
 	return nil
 }
 
-// EvaluateComponentsAsFirewall evaluates the list of components using Root Organization only
-func EvaluateComponentsAsFirewall(iq publiciq.IQ, components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
+// EvaluateComponentsWithRootOrg evaluates the list of components using Root Organization only
+func EvaluateComponentsWithRootOrg(iq publiciq.IQ, components []publiciq.Component) (eval *publiciq.Evaluation, err error) {
 	// Create temp application
 	_, appName, appID, err := createTempApplication(iq)
 	if err != nil {
