@@ -59,9 +59,8 @@ func (iq privateiq) Post(endpoint string, payload io.Reader) ([]byte, *http.Resp
 }
 
 // Put performs an HTTP PUT against the indicated endpoint
-func (iq privateiq) Put(endpoint string, payload io.Reader) (resp *http.Response, err error) {
-	_, resp, err = iq.http(http.MethodPut, endpoint, payload)
-	return
+func (iq privateiq) Put(endpoint string, payload io.Reader) ([]byte, *http.Response, error) {
+	return iq.http(http.MethodPut, endpoint, payload)
 }
 
 // Del performs an HTTP DELETE against the indicated endpoint
