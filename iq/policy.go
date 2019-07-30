@@ -7,7 +7,7 @@ import (
 	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
 
-const iqRestPolicyPrivate = "rest/policy/organization/%s/export"
+const restPolicyPrivate = "rest/policy/organization/%s/export"
 
 // IQPolicySet encapsulates the IQ policies
 type IQPolicySet struct {
@@ -81,7 +81,7 @@ type IQPolicySet struct {
 
 // ExportPolicies returns the policies of the indicated IQ server
 func ExportPolicies(iq publiciq.IQ) (p IQPolicySet, err error) {
-	endpoint := fmt.Sprintf(iqRestPolicyPrivate, "ROOT_ORGANIZATION_ID")
+	endpoint := fmt.Sprintf(restPolicyPrivate, "ROOT_ORGANIZATION_ID")
 
 	body, _, err := FromPublic(iq).Get(endpoint)
 	if err != nil {

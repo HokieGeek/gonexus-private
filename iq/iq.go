@@ -4,11 +4,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/sonatype-nexus-community/gonexus"
+	nexus "github.com/sonatype-nexus-community/gonexus"
 	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
 
-const iqRestSessionPrivate = "rest/user/session"
+const restSessionPrivate = "rest/user/session"
 
 // Defines a new IQ instance which provides overrides to transparently allow access to private APIs
 type privateiq struct {
@@ -24,7 +24,7 @@ func (iq privateiq) NewRequest(method, endpoint string, payload io.Reader) (*htt
 		return nil, err
 	}
 
-	_, resp, err := iq.pub.Get(iqRestSessionPrivate)
+	_, resp, err := iq.pub.Get(restSessionPrivate)
 	if err != nil {
 		return nil, err
 	}
