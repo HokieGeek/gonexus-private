@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"mime"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,6 +21,7 @@ const (
 	restWebhooks            = "rest/config/webhook"
 	restSupportZip          = "rest/support?noLimit=true"
 	restLicense             = "rest/product/license"
+	restAutoApps            = "rest/config/automaticApplications"
 )
 
 // FirewallComponent is a component in the Firewall NotReport
@@ -50,6 +53,11 @@ type Webhook struct {
 	URL        string   `json:"url"`
 	SecretKey  string   `json:"secretKey"`
 	EventTypes []string `json:"eventTypes"`
+}
+
+type enableAutoAppsRequest struct {
+	Enabled              bool   `json:"enabled"`
+	ParentOrganizationId string `json:"parentOrganizationId"`
 }
 
 func createTempApplication(iq publiciq.IQ) (orgID string, appName string, appID string, err error) {
@@ -129,10 +137,35 @@ func GetFirewallState(iq publiciq.IQ, repoid string) (c []FirewallComponent, err
 }
 
 // InstallLicense allows for an IQ license to be installed
-func InstallLicense(iq publiciq.IQ, license []byte) error {
-	// --form "file=@${license}"
-	_, _, err := FromPublic(iq).Post(restWebhooks, bytes.NewBuffer(license))
-	return err
+func InstallLicense(iq publiciq.IQ, license io.Reader) error {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	fw, err := w.CreateFormFile("file", "file")
+	if err != nil {
+		return fmt.Errorf("could not create form file: %v", err)
+	}
+
+	if _, err := io.Copy(fw, license); err != nil {
+		return fmt.Errorf("could not create form file: %v", err)
+	}
+
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("could not create form file: %v", err)
+	}
+
+	piq := FromPublic(iq)
+	req, err := piq.NewRequest("POST", restLicense, &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	if err != nil {
+		return fmt.Errorf("could not send license request: %v", err)
+	}
+
+	if _, resp, err := piq.Do(req); err != nil && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("could not send license request: %v", err)
+	}
+
+	return nil
 }
 
 // GetSupportZip generates a support zip with the given options
@@ -162,5 +195,32 @@ func CreateWebhook(iq publiciq.IQ, url, secret string, eventTypes []string) erro
 		return err
 	}
 	_, _, err = FromPublic(iq).Post(restWebhooks, bytes.NewBuffer(json))
+	return err
+}
+
+// EnableAutomaticApplications enables automatic applications for the given organization
+func EnableAutomaticApplications(iq publiciq.IQ, orgName string) error {
+	org, err := publiciq.GetOrganizationByName(iq, orgName)
+	if err != nil {
+		return err
+	}
+
+	json, err := json.Marshal(enableAutoAppsRequest{true, org.ID})
+	if err != nil {
+		return err
+	}
+
+	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(json))
+	return err
+}
+
+// DisableAutomaticApplications enables automatic applications for the given organization
+func DisableAutomaticApplications(iq publiciq.IQ) error {
+	json, err := json.Marshal(enableAutoAppsRequest{Enabled: false})
+	if err != nil {
+		return err
+	}
+
+	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(json))
 	return err
 }
