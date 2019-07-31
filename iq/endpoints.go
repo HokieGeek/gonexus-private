@@ -22,6 +22,7 @@ const (
 	restSupportZip          = "rest/support?noLimit=true"
 	restLicense             = "rest/product/license"
 	restAutoApps            = "rest/config/automaticApplications"
+	restSystemNotice        = "rest/config/systemNotice"
 )
 
 // FirewallComponent is a component in the Firewall NotReport
@@ -58,6 +59,12 @@ type Webhook struct {
 type enableAutoAppsRequest struct {
 	Enabled              bool   `json:"enabled"`
 	ParentOrganizationId string `json:"parentOrganizationId"`
+}
+
+type systemNotice struct {
+	ID      string `json:"id"`
+	Message string `json:"message"`
+	Enabled bool   `json:"enabled"`
 }
 
 func createTempApplication(iq publiciq.IQ) (orgID string, appName string, appID string, err error) {
@@ -222,5 +229,25 @@ func DisableAutomaticApplications(iq publiciq.IQ) error {
 	}
 
 	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(json))
+	return err
+}
+
+// EnableNotice sets a message in IQ
+func EnableNotice(iq publiciq.IQ, text string) error {
+	json, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: true, Message: text})
+	if err != nil {
+		return err
+	}
+	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(json))
+	return err
+}
+
+// DisableNotice disables the system notice
+func DisableNotice(iq publiciq.IQ) error {
+	json, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: false})
+	if err != nil {
+		return err
+	}
+	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(json))
 	return err
 }
