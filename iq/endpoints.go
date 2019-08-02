@@ -23,6 +23,7 @@ const (
 	restLicense             = "rest/product/license"
 	restAutoApps            = "rest/config/automaticApplications"
 	restSystemNotice        = "rest/config/systemNotice"
+	restReportReevaluate    = "rest/report/%s/%s/reevaluatePolicy"
 )
 
 // FirewallComponent is a component in the Firewall NotReport
@@ -250,4 +251,42 @@ func DisableNotice(iq publiciq.IQ) error {
 	}
 	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(json))
 	return err
+}
+
+// ReevaluateReport hits the re-eval button
+func ReevaluateReport(iq publiciq.IQ, appID, stage string) error {
+	info, err := publiciq.GetReportInfoByAppIDStage(iq, appID, stage)
+	if err != nil {
+		return fmt.Errorf("did not find report for '%s' at '%s' build stage: %v", appID, stage, err)
+	}
+
+	endpoint := fmt.Sprintf(restReportReevaluate, appID, info.ReportID())
+	_, _, err = FromPublic(iq).Post(endpoint, nil)
+	return err
+}
+
+// ReevaluateAllReports hits the re-eval button on AllTheThings!
+func ReevaluateAllReports(iq publiciq.IQ) error {
+	apps, err := publiciq.GetAllApplications(iq)
+	if err != nil {
+		return fmt.Errorf("could not retrieve applications: %v", err)
+	}
+
+	for _, app := range apps {
+		if err != nil {
+			continue
+		}
+		var infos []publiciq.ReportInfo
+		if infos, err = publiciq.GetReportInfosByAppID(iq, app.PublicID); err == nil {
+			for _, info := range infos {
+				endpoint := fmt.Sprintf(restReportReevaluate, app.PublicID, info.ReportID())
+				_, _, err = FromPublic(iq).Post(endpoint, nil)
+			}
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("could not retrieve application: %v", err)
+	}
+
+	return nil
 }
