@@ -24,6 +24,9 @@ const (
 	restAutoApps            = "rest/config/automaticApplications"
 	restSystemNotice        = "rest/config/systemNotice"
 	restReportReevaluate    = "rest/report/%s/%s/reevaluatePolicy"
+	restMonitoringOrg       = "rest/policyMonitoring/organization/%s"
+	restMonitoringApp       = "rest/policyMonitoring/application/%s"
+	restMonitoringTrigger   = "rest/tasks/triggerPolicyMonitor"
 )
 
 // FirewallComponent is a component in the Firewall NotReport
@@ -59,7 +62,7 @@ type Webhook struct {
 
 type enableAutoAppsRequest struct {
 	Enabled              bool   `json:"enabled"`
-	ParentOrganizationId string `json:"parentOrganizationId"`
+	ParentOrganizationID string `json:"parentOrganizationId"`
 }
 
 type systemNotice struct {
@@ -67,6 +70,17 @@ type systemNotice struct {
 	Message string `json:"message"`
 	Enabled bool   `json:"enabled"`
 }
+
+type policyMonitoringRequest struct {
+	StageTypeID string `json:"stageTypeId"`
+}
+
+/*
+type policyMonitoringResponse struct {
+	ID          string `json:"id"`
+	OwnerID     string `json:"ownerId"`
+	StageTypeID string `json:"stageTypeId"`
+}*/
 
 func createTempApplication(iq publiciq.IQ) (orgID string, appName string, appID string, err error) {
 	rand.Seed(time.Now().UnixNano())
@@ -198,11 +212,11 @@ func GetSupportZip(iq publiciq.IQ) ([]byte, string, error) {
 func CreateWebhook(iq publiciq.IQ, url, secret string, eventTypes []string) error {
 	request := Webhook{URL: url, SecretKey: secret, EventTypes: eventTypes}
 
-	json, err := json.Marshal(request)
+	str, err := json.Marshal(request)
 	if err != nil {
 		return err
 	}
-	_, _, err = FromPublic(iq).Post(restWebhooks, bytes.NewBuffer(json))
+	_, _, err = FromPublic(iq).Post(restWebhooks, bytes.NewBuffer(str))
 	return err
 }
 
@@ -213,43 +227,43 @@ func EnableAutomaticApplications(iq publiciq.IQ, orgName string) error {
 		return err
 	}
 
-	json, err := json.Marshal(enableAutoAppsRequest{true, org.ID})
+	str, err := json.Marshal(enableAutoAppsRequest{true, org.ID})
 	if err != nil {
 		return err
 	}
 
-	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(json))
+	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(str))
 	return err
 }
 
 // DisableAutomaticApplications enables automatic applications for the given organization
 func DisableAutomaticApplications(iq publiciq.IQ) error {
-	json, err := json.Marshal(enableAutoAppsRequest{Enabled: false})
+	str, err := json.Marshal(enableAutoAppsRequest{Enabled: false})
 	if err != nil {
 		return err
 	}
 
-	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(json))
+	_, _, err = FromPublic(iq).Put(restAutoApps, bytes.NewBuffer(str))
 	return err
 }
 
 // EnableNotice sets a message in IQ
 func EnableNotice(iq publiciq.IQ, text string) error {
-	json, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: true, Message: text})
+	str, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: true, Message: text})
 	if err != nil {
 		return err
 	}
-	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(json))
+	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(str))
 	return err
 }
 
 // DisableNotice disables the system notice
 func DisableNotice(iq publiciq.IQ) error {
-	json, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: false})
+	str, err := json.Marshal(systemNotice{ID: "system-notice", Enabled: false})
 	if err != nil {
 		return err
 	}
-	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(json))
+	_, _, err = FromPublic(iq).Put(restSystemNotice, bytes.NewBuffer(str))
 	return err
 }
 
@@ -289,4 +303,68 @@ func ReevaluateAllReports(iq publiciq.IQ) error {
 	}
 
 	return nil
+}
+
+// EnableContinuousMonitoringApplication will enable Continuous Monitoring for the given application
+func EnableContinuousMonitoringApplication(iq publiciq.IQ, appPublicID, stage string) error {
+	app, err := publiciq.GetApplicationByPublicID(iq, appPublicID)
+	if err != nil {
+		return err
+	}
+
+	buf, err := json.Marshal(policyMonitoringRequest{stage})
+	if err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf(restMonitoringApp, app.ID)
+	_, _, err = FromPublic(iq).Put(endpoint, bytes.NewBuffer(buf))
+	return nil
+}
+
+// EnableContinuousMonitoringOrganization will enable Continuous Monitoring for the given organization
+func EnableContinuousMonitoringOrganization(iq publiciq.IQ, orgName, stage string) error {
+	org, err := publiciq.GetOrganizationByName(iq, orgName)
+	if err != nil {
+		return err
+	}
+
+	buf, err := json.Marshal(policyMonitoringRequest{stage})
+	if err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf(restMonitoringOrg, org.ID)
+	_, _, err = FromPublic(iq).Put(endpoint, bytes.NewBuffer(buf))
+	return err
+}
+
+// DisableContinuousMonitoringApplication will enable Continuous Monitoring for the given application
+func DisableContinuousMonitoringApplication(iq publiciq.IQ, appPublicID string) error {
+	app, err := publiciq.GetApplicationByPublicID(iq, appPublicID)
+	if err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf(restMonitoringApp, app.ID)
+	_, err = FromPublic(iq).Del(endpoint)
+	return err
+}
+
+// DisableContinuousMonitoringOrganization will enable Continuous Monitoring for the given organization
+func DisableContinuousMonitoringOrganization(iq publiciq.IQ, orgName string) error {
+	org, err := publiciq.GetOrganizationByName(iq, orgName)
+	if err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf(restMonitoringOrg, org.ID)
+	_, err = FromPublic(iq).Del(endpoint)
+	return err
+}
+
+// TriggerContinuousMonitoring will test trigger continuous monitoring
+func TriggerContinuousMonitoring(iq publiciq.IQ) error {
+	_, _, err := FromPublic(iq).Post(restMonitoringTrigger, nil)
+	return err
 }
