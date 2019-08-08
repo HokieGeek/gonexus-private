@@ -19,12 +19,12 @@ const (
 type IQPolicySet struct {
 	Policies []struct {
 		Actions struct {
-			Proxy        string `json:"proxy"`
-			Build        string `json:"build"`
-			StageRelease string `json:"stage-release"`
-			Release      string `json:"release"`
-			Operate      string `json:"operate"`
-			Develop      string `json:"develop"`
+			Proxy        string `json:"proxy,omitempty"`
+			Build        string `json:"build,omitempty"`
+			StageRelease string `json:"stage-release,omitempty"`
+			Release      string `json:"release,omitempty"`
+			Operate      string `json:"operate,omitempty"`
+			Develop      string `json:"develop,omitempty"`
 		} `json:"actions,omitempty"`
 		Constraints []struct {
 			Conditions []struct {
