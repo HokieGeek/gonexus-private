@@ -1,13 +1,19 @@
 package privateiq
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 
 	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
 
-const restPolicyPrivate = "rest/policy/organization/%s/export"
+const (
+	restPolicyExportPrivate = "rest/policy/organization/%s/export"
+	restPolicyImportPrivate = "rest/policy/organization/%s/import"
+)
 
 // IQPolicySet encapsulates the IQ policies
 type IQPolicySet struct {
@@ -81,7 +87,7 @@ type IQPolicySet struct {
 
 // ExportPolicies returns the policies of the indicated IQ server
 func ExportPolicies(iq publiciq.IQ) (p IQPolicySet, err error) {
-	endpoint := fmt.Sprintf(restPolicyPrivate, "ROOT_ORGANIZATION_ID")
+	endpoint := fmt.Sprintf(restPolicyExportPrivate, "ROOT_ORGANIZATION_ID")
 
 	body, _, err := FromPublic(iq).Get(endpoint)
 	if err != nil {
@@ -91,4 +97,35 @@ func ExportPolicies(iq publiciq.IQ) (p IQPolicySet, err error) {
 	err = json.Unmarshal(body, &p)
 
 	return
+}
+
+// ImportPolicies imports the given policies
+func ImportPolicies(iq publiciq.IQ, file io.Reader) error {
+
+	piq := FromPublic(iq)
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	fw, err := w.CreateFormFile("file", "file")
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(fw, file)
+
+	if err := w.Close(); err != nil {
+		return err
+	}
+
+	endpoint := fmt.Sprintf(restPolicyImportPrivate, "ROOT_ORGANIZATION_ID")
+	req, err := piq.NewRequest("POST", endpoint, &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	if err != nil {
+		return err
+	}
+
+	_, _, err = piq.Do(req)
+
+	return err
 }
