@@ -368,3 +368,6 @@ func TriggerContinuousMonitoring(iq publiciq.IQ) error {
 	_, _, err := FromPublic(iq).Post(restMonitoringTrigger, nil)
 	return err
 }
+
+// POST rest/label/organization/ROOT_ORGANIZATION_ID
+// {"id":null,"ownerId":null,"label":"foo","labelLowercase":null,"color":"light-red","description":"bar"}
