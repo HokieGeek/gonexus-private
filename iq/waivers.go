@@ -3,6 +3,7 @@ package privateiq
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	publiciq "github.com/sonatype-nexus-community/gonexus/iq"
 )
@@ -26,10 +27,10 @@ type waiversByOwner struct {
 	OwnerID   string       `json:"ownerId"`
 	OwnerName string       `json:"ownerName"`
 	OwnerType string       `json:"ownerType"`
-	Waivers   []waiverJson `json:"waivers"`
+	Waivers   []waiverJSON `json:"waivers"`
 }
 
-type waiverJson struct {
+type waiverJSON struct {
 	ID                  string `json:"id"`
 	Hash                string `json:"hash"`
 	PolicyID            string `json:"policyId"`
@@ -54,7 +55,7 @@ type Waiver struct {
 	PolicyName          string             `json:"policyName"`
 }
 
-func waiverFromJSON(w waiverJson, c publiciq.Component) Waiver {
+func waiverFromJSON(w waiverJSON, c publiciq.Component) Waiver {
 	return Waiver{
 		ID:                  w.ID,
 		Component:           c,
@@ -68,7 +69,7 @@ func waiverFromJSON(w waiverJson, c publiciq.Component) Waiver {
 	}
 }
 
-func waiversFromJSON(jsonWaivers []waiverJson, c publiciq.Component) []Waiver {
+func waiversFromJSON(jsonWaivers []waiverJSON, c publiciq.Component) []Waiver {
 	waivers := make([]Waiver, len(jsonWaivers))
 	for i, w := range jsonWaivers {
 		waivers[i] = waiverFromJSON(w, c)
@@ -128,10 +129,29 @@ func Waivers(iq publiciq.IQ) ([]Waiver, error) {
 	}
 
 	waivers := make([]Waiver, 0)
-	for _, a := range apps {
-		appWaivers, _ := WaiversByAppID(iq, a.PublicID)
-		waivers = append(waivers, appWaivers...)
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	appIDs := make(chan string, 20)
+	for w := 1; w <= 20; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for a := range appIDs {
+				appWaivers, _ := WaiversByAppID(iq, a)
+				mu.Lock()
+				waivers = append(waivers, appWaivers...)
+				mu.Unlock()
+			}
+		}()
 	}
+
+	for _, a := range apps {
+		appIDs <- a.PublicID
+	}
+	close(appIDs)
+
+	wg.Wait()
 
 	return waivers, nil
 }
