@@ -23,14 +23,13 @@ type componentWaivers struct {
 }
 
 type waiversByOwner struct {
-	OwnerID   string   `json:"ownerId"`
-	OwnerName string   `json:"ownerName"`
-	OwnerType string   `json:"ownerType"`
-	Waivers   []Waiver `json:"waivers"`
+	OwnerID   string       `json:"ownerId"`
+	OwnerName string       `json:"ownerName"`
+	OwnerType string       `json:"ownerType"`
+	Waivers   []waiverJson `json:"waivers"`
 }
 
-// Waiver encapsulates the information about a given waiver
-type Waiver struct {
+type waiverJson struct {
 	ID                  string `json:"id"`
 	Hash                string `json:"hash"`
 	PolicyID            string `json:"policyId"`
@@ -40,6 +39,41 @@ type Waiver struct {
 	ConstraintFactsJSON string `json:"constraintFactsJson"`
 	ConstraintFacts     string `json:"constraintFacts"`
 	PolicyName          string `json:"policyName"`
+}
+
+// Waiver encapsulates the information about a given waiver
+type Waiver struct {
+	ID                  string             `json:"id"`
+	Component           publiciq.Component `json:"component"`
+	PolicyID            string             `json:"policyId"`
+	OwnerID             string             `json:"ownerId"`
+	Comment             string             `json:"comment"`
+	CreateTime          int64              `json:"createTime"`
+	ConstraintFactsJSON string             `json:"constraintFactsJson"`
+	ConstraintFacts     string             `json:"constraintFacts"`
+	PolicyName          string             `json:"policyName"`
+}
+
+func waiverFromJSON(w waiverJson, c publiciq.Component) Waiver {
+	return Waiver{
+		ID:                  w.ID,
+		Component:           c,
+		PolicyID:            w.PolicyID,
+		OwnerID:             w.OwnerID,
+		Comment:             w.Comment,
+		CreateTime:          w.CreateTime,
+		ConstraintFactsJSON: w.ConstraintFactsJSON,
+		ConstraintFacts:     w.ConstraintFacts,
+		PolicyName:          w.PolicyName,
+	}
+}
+
+func waiversFromJSON(jsonWaivers []waiverJson, c publiciq.Component) []Waiver {
+	waivers := make([]Waiver, len(jsonWaivers))
+	for i, w := range jsonWaivers {
+		waivers[i] = waiverFromJSON(w, c)
+	}
+	return waivers
 }
 
 func getWaiversByComponentHash(iq publiciq.IQ, appID, hash string) ([]waiversByOwner, error) {
@@ -66,7 +100,7 @@ func WaiversByAppIDStage(iq publiciq.IQ, appID, stage string) ([]Waiver, error) 
 	for _, c := range report.Components {
 		byOwner, _ := getWaiversByComponentHash(iq, appID, c.Hash)
 		for _, o := range byOwner {
-			waivers = append(waivers, o.Waivers...)
+			waivers = append(waivers, waiversFromJSON(o.Waivers, c.Component)...)
 		}
 	}
 
@@ -81,6 +115,22 @@ func WaiversByAppID(iq publiciq.IQ, appID string) ([]Waiver, error) {
 	for _, s := range stages {
 		stageWaivers, _ := WaiversByAppIDStage(iq, appID, s)
 		waivers = append(waivers, stageWaivers...)
+	}
+
+	return waivers, nil
+}
+
+// Waivers returns the waivers for all applications in IQ
+func Waivers(iq publiciq.IQ) ([]Waiver, error) {
+	apps, err := publiciq.GetAllApplications(iq)
+	if err != nil {
+		return nil, err
+	}
+
+	waivers := make([]Waiver, 0)
+	for _, a := range apps {
+		appWaivers, _ := WaiversByAppID(iq, a.PublicID)
+		waivers = append(waivers, appWaivers...)
 	}
 
 	return waivers, nil
