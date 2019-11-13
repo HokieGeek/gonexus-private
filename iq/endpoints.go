@@ -178,10 +178,10 @@ func InstallLicense(iq publiciq.IQ, license io.Reader) error {
 
 	piq := FromPublic(iq)
 	req, err := piq.NewRequest("POST", restLicense, &b)
-	req.Header.Set("Content-Type", w.FormDataContentType())
 	if err != nil {
-		return fmt.Errorf("could not send license request: %v", err)
+		return fmt.Errorf("could not create license request: %v", err)
 	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	if _, resp, err := piq.Do(req); err != nil && resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("could not send license request: %v", err)
