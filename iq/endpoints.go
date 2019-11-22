@@ -93,7 +93,7 @@ func createTempApplication(iq publiciq.IQ) (orgID string, appName string, appID 
 
 	appName = fmt.Sprintf("%s_app", name)
 
-	appID, err = publiciq.CreateApplication(iq, appName, orgID)
+	appID, err = publiciq.CreateApplication(iq, appName, appName, orgID)
 	if err != nil {
 		return
 	}

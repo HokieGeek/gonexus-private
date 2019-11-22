@@ -5,3 +5,5 @@ github.com/sonatype-nexus-community/gonexus v0.47.0 h1:zTfZ+pIYoFMh3Eq537vai/To7
 github.com/sonatype-nexus-community/gonexus v0.47.0/go.mod h1:8mIhif8LsneZhpdBovy51ah8CcYuy7Al4WP723TQoOY=
 github.com/sonatype-nexus-community/gonexus v0.47.1 h1:NsDhJsVKwV+An4O4aESu1xfd2aZQIFwoWgfaqIVkaAk=
 github.com/sonatype-nexus-community/gonexus v0.47.1/go.mod h1:8mIhif8LsneZhpdBovy51ah8CcYuy7Al4WP723TQoOY=
+github.com/sonatype-nexus-community/gonexus v0.54.0 h1:T7NqiJDJcj9bz0EgRv3zmxPk92phCgYwLsqqZeIpw/I=
+github.com/sonatype-nexus-community/gonexus v0.54.0/go.mod h1:8mIhif8LsneZhpdBovy51ah8CcYuy7Al4WP723TQoOY=
