@@ -3,6 +3,7 @@ package privateiq
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	nexusiq "github.com/sonatype-nexus-community/gonexus/iq"
 	// nexusiq "github.com/sonatype-nexus-community/gonexus/iq"
@@ -24,7 +25,8 @@ type IqComponentLabel struct {
 }
 
 func GetAllComponentLabels(iq nexusiq.IQ) ([]IqComponentLabel, error) {
-	body, _, err := FromPublic(iq).Get(restLabelComponentOrg)
+	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION")
+	body, _, err := FromPublic(iq).Get(endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +46,8 @@ func CreateComponentLabel(iq nexusiq.IQ, organization, label, description, color
 	if err != nil {
 		return err
 	}
-	_, _, err = FromPublic(iq).Post(restLabelComponentOrg, bytes.NewBuffer(buf))
+	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION")
+	_, _, err = FromPublic(iq).Post(endpoint, bytes.NewBuffer(buf))
 	return err
 }
 
