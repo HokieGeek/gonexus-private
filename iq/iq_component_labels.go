@@ -25,7 +25,7 @@ type IqComponentLabel struct {
 }
 
 func GetAllComponentLabels(iq nexusiq.IQ) ([]IqComponentLabel, error) {
-	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION")
+	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION_ID")
 	body, _, err := FromPublic(iq).Get(endpoint)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func CreateComponentLabel(iq nexusiq.IQ, organization, label, description, color
 	if err != nil {
 		return err
 	}
-	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION")
+	endpoint := fmt.Sprintf(restLabelComponentOrg, "ROOT_ORGANIZATION_ID")
 	_, _, err = FromPublic(iq).Post(endpoint, bytes.NewBuffer(buf))
 	return err
 }
