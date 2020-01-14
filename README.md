@@ -1,10 +1,13 @@
 # gonexus-private
 
-Provides a go library for connecting to, and interacting with, the ***private APIs*** of Sonatype Nexus application such as Nexus Repository Manager and Nexus IQ Server.
+Provides a go library for connecting to, and interacting with, the **_private APIs_** of Sonatype Nexus application such as Nexus Repository Manager and Nexus IQ Server.
 
-Specifically, it wraps around [github.com/sonatype-nexus-community/gonexus](//github.com/sonatype-nexus-community/gonexus) to add functionality using private APIs
+Specifically, it wraps around [github.com/sonatype-nexus-community/gonexus](//github.com/sonatype-nexus-community/gonexus) to add functionality using unsupported private APIs
+
+:no_entry: WARNING: To be clear, use of Sonatype Nexus private APIs is neither supported nor condoned by Sonatype.
 
 ## Organization of the library
+
 The library is broken into two packages. One for each application
 
 ### nexusiq
@@ -12,6 +15,7 @@ The library is broken into two packages. One for each application
 Create a connection to an instance of Nexus IQ Server
 
 Example:
+
 ```go
 import (
 	"github.com/hokiegeek/gonexus-private/iq"
