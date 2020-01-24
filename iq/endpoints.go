@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"mime"
-	"mime/multipart"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,7 +18,6 @@ const (
 	restFirewallPrivate     = "rest/repositories/%s/report/details"
 	restWebhooks            = "rest/config/webhook"
 	restSupportZip          = "rest/support?noLimit=true"
-	restLicense             = "rest/product/license"
 	restAutoApps            = "rest/config/automaticApplications"
 	restSystemNotice        = "rest/config/systemNotice"
 	restMonitoringOrg       = "rest/policyMonitoring/organization/%s"
@@ -155,38 +152,6 @@ func GetFirewallState(iq publiciq.IQ, repoid string) (c []FirewallComponent, err
 	}
 
 	return
-}
-
-// InstallLicense allows for an IQ license to be installed
-func InstallLicense(iq publiciq.IQ, license io.Reader) error {
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-
-	fw, err := w.CreateFormFile("file", "file")
-	if err != nil {
-		return fmt.Errorf("could not create form file: %v", err)
-	}
-
-	if _, err := io.Copy(fw, license); err != nil {
-		return fmt.Errorf("could not create form file: %v", err)
-	}
-
-	if err := w.Close(); err != nil {
-		return fmt.Errorf("could not create form file: %v", err)
-	}
-
-	piq := FromPublic(iq)
-	req, err := piq.NewRequest("POST", restLicense, &b)
-	if err != nil {
-		return fmt.Errorf("could not create license request: %v", err)
-	}
-	req.Header.Set("Content-Type", w.FormDataContentType())
-
-	if _, resp, err := piq.Do(req); err != nil && resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("could not send license request: %v", err)
-	}
-
-	return nil
 }
 
 // GetSupportZip generates a support zip with the given options
